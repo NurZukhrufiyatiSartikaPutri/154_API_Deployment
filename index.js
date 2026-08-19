@@ -1,5 +1,5 @@
 const express = require("express");
-const connectDatabase = require("./models"); 
+const db = require("./models");
 
 const app = express();
 
@@ -9,13 +9,21 @@ app.use(express.urlencoded({ extended: true }));
 let databaseReady = false;
 let databasePromise = null;
 
+async function connectDatabase() {
+  await db.sequelize.authenticate();
+  console.log("Database connection successfully");
+
+  await db.sequelize.sync({ alter: false });
+  console.log("Database synchronized");
+}
+
 app.use(async (req, res, next) => {
   try {
     if (!databaseReady) {
       if (!databasePromise) {
         databasePromise = connectDatabase();
       }
-      
+
       await databasePromise;
       databaseReady = true;
     }
@@ -28,7 +36,7 @@ app.use(async (req, res, next) => {
 
     return res.status(500).json({
       message: "Database initialization failed."
-    }); 
+    });
   }
 });
 
